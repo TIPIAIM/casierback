@@ -1,0 +1,52 @@
+├── server1.js          (Votre fichier serveur principal)
+├── Basededon.js        (Fichier de connexion à MongoDB)
+├── models/             (Dossier pour les modèles MongoDB)
+│   └── User.js         (Modèle utilisateur)
+├── routes/             (Dossier pour les routes)
+│   └── userRoutes.js   (Routes pour l'utilisateur)
+└── controllers/        (Dossier pour les contrôleurs)
+    └── userController.js (Contrôleur pour l'utilisateur)
+
+
+cors (pour les requêtes cross-origin)
+Rôle : Permet à votre API d'accepter des requêtes provenant de différents domaines (utile pour les applications frontend séparées).
+
+npm install cors
+Utilisation : Ajoutez ce middleware dans server1.js :
+
+const cors = require("cors");
+app.use(cors());
+
+
+body-parser (pour parser les requêtes HTTP)
+Rôle : Parse les corps de requêtes HTTP (comme JSON ou URL-encoded). 
+Note : Express inclut désormais cette fonctionnalité nativement avec express.json() et express.urlencoded().
+
+npm install body-parser
+npm install express mongoose dotenv cors
+
+Si vous utilisez nodemon pour le développement :
+npm install nodemon
+
+Commandes pour installer tout en une fois
+Si vous démarrez un nouveau projet, vous pouvez installer toutes les dépendances en une seule commande :
+
+npm install express mongoose dotenv cors nodemon
+
+Avec ces bibliothèques, votre projet sera prêt à fonctionner avec Express, MongoDB, 
+et des fonctionnalités supplémentaires 
+comme le support des variables d'environnement et le redémarrage automatique du serveur.
+
+Rendez-vous sur le site officiel de Postman :  https://www.postman.com/downloads/
+
+
+. Créer une nouvelle requête
+Cliquez sur le bouton "New" en haut à gauche.
+
+Sélectionnez "Request".
+
+Donnez un nom à votre requête (par exemple, Create User).
+
+Choisissez ou créez une collection pour organiser vos requêtes (par exemple, MonProjetAPI).
+
+Cliquez sur "Save".
