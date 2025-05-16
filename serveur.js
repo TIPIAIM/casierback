@@ -6,6 +6,7 @@ require("dotenv").config(); // Charger les variables d'environnement
 const path = require("path");
 const app = express(); //app : Pour créer une application Express.
 const port = process.env.PORT || 2025; //port : Pour définir le port du serveur.
+FRONTENDcasier = process.env.FRONTENDcasier, // Pour le développement local
 
 console.log("Clé secrète chargée :", process.env.JWT_SECRET); // Log pour vérifier la clé secrète noublie ps de verifier s'il est dns env
 
@@ -20,6 +21,7 @@ const allowedOrigins = [
   //Pour définir les domaines autorisés.
   // "http://example.com", // Remplacez par vos domaines autorisés
   "http://localhost:5173", // Pour le développement local
+  FRONTENDcasier, // Pour le développement local
 ]; //allowedOrigins : Pour définir les domaines autorisés.
 
 app.use(
