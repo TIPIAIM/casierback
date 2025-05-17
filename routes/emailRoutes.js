@@ -19,6 +19,7 @@ const transporter = nodemailer.createTransport({
     rejectUnauthorized: false, // Important pour contourner les erreurs de certificat
   },
 });
+
 router.post("/send-reference-email", async (req, res) => {
   const { to, reference, clientName, lastName } = req.body;
 
@@ -86,4 +87,80 @@ router.post("/send-reference-email", async (req, res) => {
   }
 });
 
+//Pour là notificàtion de la demande si le stàtut devien terminé
+// Configuration du transporteur email (à adapter selon votre configuration)
+router.post("/send-status-email", async (req, res) => {
+  try {
+    const { email, reference, status, fullName } = req.body;
+    console.log("Requête reçue pour l'email:", { email, reference, status });
+
+    if (status !== "completed") {
+      console.log("Statut non complet - pas d'email envoyé");
+      return res.status(400).json({
+        success: false,
+        message: "Email de notification seulement pour le statut 'completed'",
+      });
+    }
+
+   
+    const mailOptions = {
+      from: `"Service Casier Judiciaire" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: `[${reference}] Votre casier judiciaire est prêt`,
+      html: `
+     <div style="font-family: 'Segoe UI', Roboto, Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.05);">
+  <div style="background-color: #1A4D2E; color: white; padding: 20px;">
+    <h2 style="margin: 0; font-size: 22px;">📄 Votre casier judiciaire est prêt</h2>
+  </div>
+
+  <div style="padding: 20px; color: #333;">
+    <p style="font-size: 16px;">Bonjour <strong>${fullName}</strong>,</p>
+
+    <p style="font-size: 15px; line-height: 1.6;">
+      Nous avons le plaisir de vous informer que votre demande de casier judiciaire portant la référence
+      <strong style="color: #1A4D2E;">${reference}</strong> a été traitée avec succès et est désormais <strong>prête à être récupérée</strong>.
+    </p>
+
+    <div style="background-color: #F7FAFC; border-left: 5px solid #1A4D2E; padding: 15px; margin: 20px 0; font-size: 15px;">
+      <p><strong>📦 Mode de livraison :</strong> ${req.body.deliveryMethod || "Non spécifié"}</p>
+    </div>
+
+    <p style="font-size: 15px;">
+      Si vous avez des questions ou si vous souhaitez planifier un retrait, n’hésitez pas à nous contacter.
+    </p>
+
+    <p style="margin-top: 25px;">
+      Cordialement,<br>
+      <strong>Le Service des casiers judiciaires</strong><br>
+      ☎️ <a href="tel:+22462413889" style="color: #1A4D2E; text-decoration: none;">+224 625 888 145</a><br>
+      ✉️ <a href="mailto:casier@service.gn" style="color: #1A4D2E; text-decoration: none;">casier@service.gn</a>
+    </p>
+  </div>
+
+  <div style="background-color: #F0F4F8; padding: 15px; font-size: 13px; text-align: center; color: #666;">
+    Ce message vous a été envoyé automatiquement. Merci de ne pas y répondre directement.
+  </div>
+</div>
+
+      `,
+    };
+
+    console.log("Envoi de l'email...");
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email envoyé:", info.messageId);
+
+    res.status(200).json({
+      success: true,
+      message: "Email de notification envoyé avec succès",
+      messageId: info.messageId,
+    });
+  } catch (error) {
+    console.error("Erreur lors de l'envoi de l'email:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de l'envoi de l'email de notification",
+      error: error.message,
+    });
+  }
+});
 module.exports = router;

@@ -6,9 +6,8 @@ require("dotenv").config(); // Charger les variables d'environnement
 const path = require("path");
 const app = express(); //app : Pour créer une application Express.
 const port = process.env.PORT || 2025; //port : Pour définir le port du serveur.
-FRONTENDcasier = process.env.FRONTENDcasier, // Pour le développement local
-
-console.log("Clé secrète chargée :", process.env.JWT_SECRET); // Log pour vérifier la clé secrète noublie ps de verifier s'il est dns env
+(FRONTENDcasier = process.env.FRONTENDcasier), // Pour le développement local
+  console.log("Clé secrète chargée :", process.env.JWT_SECRET); // Log pour vérifier la clé secrète noublie ps de verifier s'il est dns env
 
 //-----------------------------------------
 //cookie-parser est un outil simple et efficace pour gérer les cookies dans une application Express. Il facilite la lecture,
@@ -81,7 +80,6 @@ app.get("/", (req, res) => {
   //route racine à retirer àpres
   res.send("Bienvenue, votre serveur est deja en cour");
 });
-
-app.listen(port, () => {
+ app.listen(port, () => {
   console.log(` serveur demarré sur http://localhost:${port}`);
 });
