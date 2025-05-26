@@ -1,3 +1,5 @@
+//userControllerc.js
+
 {
   /**
  un contrôleur d'authentification pour une application Node.js. Il gère l'inscription,
@@ -10,26 +12,95 @@ console.log("Clé secrète chargée :", process.env.JWT_SECRET); // Log pour vé
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken"); //jsonwebtoken : Pour gérer l'authentification avec JWT.
 
-const Userc = require("../models/Userc"); //importation du modele utilisateur
+const Userc = require("../models/Userc");
 
-// Inscription
+const nodemailer = require("nodemailer");
+
+// Nodemailer configuration (replace with your actual credentials)
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "alphadiaous@gmail.com", // Replace with your email
+    pass: "yxnnrffwkjgunegk", // Replace with your password or app password
+  },
+});
+
 const register = async (req, res) => {
-  //fonction d'inscription
   try {
-    //essayer
-    const { name, email, password, age } = req.body; //récupération des données de l'utilisateur
-    const usercExists = await Userc.findOne({ email }); //recherche de l'utilisateur par email
-    if (usercExists)
-      //si l'utilisateur existe déjà
-      return res.status(400).json({ message: "Email déjà utilisé" }); //message d'erreur
+    const { name, email, password, age } = req.body;
 
-    const userc = await Userc.create({ name, email, password, age }); //création de l'utilisateur
-    res.status(201).json({ message: "Utilisateur créé avec succès" }); //message de succès
+    const usercExists = await Userc.findOne({ email });
+    if (usercExists) {
+      return res.status(400).json({ message: "Email déjà utilisé" });
+    }
+
+    const verificationCode = Math.random()
+      .toString(36)
+      .substring(2, 10)
+      .toUpperCase();
+
+    const newUser = new Userc({
+      name,
+      email,
+      password, // brut
+      age,
+      verificationCode,
+    });
+
+    await newUser.save();
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Code de vérification",
+      html: `<p>Voici votre code de vérification : <b>${verificationCode}</b></p>`,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Échec de l'envoi du mail" });
+      }
+      res.status(201).json({
+        message: "Inscription réussie. Vérifiez votre email.",
+        success: true,
+      });
+    });
   } catch (error) {
-    //en cas d'erreur
-    res.status(500).json({ error: error.message }); //message d'erreur
+    res.status(500).json({ error: error.message });
   }
 };
+
+const verifyEmail = async (req, res) => {
+  try {
+    const { verificationCode } = req.body;
+
+    // Find user with matching verification code
+    const user = await Userc.findOne({ verificationCode: verificationCode });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid verification code" });
+    }
+
+    // Update user to set verified to true and remove verification code
+    user.isVerified = true;
+    user.verificationCode = undefined;
+    await user.save();
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    res.status(200).json({
+      message: "Email verified successfully",
+      success: true,
+      token: token,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Connexion
 {
   /**Taper : JSON (application/json) ;Envoyer une requête de connexion : Méthode : POST
@@ -41,35 +112,43 @@ const register = async (req, res) => {
 }
 
 const login = async (req, res) => {
-  //fonction de connexion
- 
   try {
-    const { email, password } = req.body; //récupération des données de l'utilisateur
-    const userc = await Userc.findOne({ email }); //recherche de l'utilisateur par email
-    if (!userc)
-      //si l'utilisateur n'existe pas
-      return res.status(400).json({ message: "Utilisateur non trouvé" }); //message d'erreur
+    console.log("req.body:", req.body);
+    const { email, password } = req.body;
+    const userc = await Userc.findOne({ email, isVerified: true });
 
-    const isMatch = await bcrypt.compare(password, userc.password); //comparer le mot de passe entré avec le mot de passe haché dans la base de données
-    if (!isMatch)
-      //si le mot de passe ne correspond pas
-      return res.status(400).json({ message: "Mot de passe incorrect" }); //message d'erreur
+    if (!userc) {
+      return res
+        .status(400)
+        .json({ message: "Utilisateur non trouvé ou non vérifié" });
+    }
 
-    const token = jwt.sign({ id: userc._id }, process.env.JWT_SECRET, {
-      //création du token
-      expiresIn: "1h", //Le token expire après 1 heure
+    const isMatch = await userc.comparePassword(password);
+    console.log("Le Password match bien:", isMatch);
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message:
+          "Mot de passe incorrect. Veuillez vérifier votre email et réessayer.",
+      });
+    }
+
+    const token = jwt.sign(
+      { id: userc._id, email: userc.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+    console.log("✅ Token JWT généré :", token);
+    res.status(200).json({
+      token: token,
+      userc: userc,
+      message: "Connexion réussie",
     });
-
-    // Ajout des logs Vérifie si un token valide est affiché dans la console.
-    console.log("Token généré :", token); //affichage du token
-    console.log("Clé secrète utilisée :", process.env.JWT_SECRET); //affichage de la clé secrète
-    //---
-    res.status(200).json({ token, userc }); //envoi du token et de l'utilisateur
   } catch (error) {
-    //en cas d'erreur
-    res.status(500).json({ error: error.message }); //message d'erreur
+    res.status(500).json({ error: error.message });
   }
 };
+
 // Récupérer tous les utilisateurs
 const getUsers = async (req, res) => {
   //fonction pour récupérer tous les utilisateurs
@@ -124,7 +203,7 @@ const deleteUser = async (req, res) => {
   //fonction pour supprimer un utilisateur
   try {
     //essayer
-    const user = await Userc.findByIdAndDelete(req.params.id); //rechercher et supprimer l'utilisateur par ID
+    const user = await Userc.findByIdAndDelete(req.params.id); //réchercher et supprimer l'utilisateur par ID
     if (!user)
       //si l'utilisateur n'existe pas
       return res.status(404).json({ message: "Utilisateur non trouvé" }); //message d'erreur
@@ -135,12 +214,40 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const loginAfter2FA = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await Userc.findOne({ email, isVerified: true });
+
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "Utilisateur non trouvé ou non vérifié" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Mot de passe incorrect" });
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    res.status(200).json({ token: token, message: "Connexion réussie" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
-  //exportation des fonctions
   register,
   login,
   getUsers,
   getUserById,
   updateUser,
   deleteUser,
+  verifyEmail,
+  loginAfter2FA,
 };

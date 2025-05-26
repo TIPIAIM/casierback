@@ -1,3 +1,5 @@
+//serveur.js
+
 const express = require("express"); //express : Pour créer des applications Web.
 const cors = require("cors"); //cors : Pour autoriser les requêtes entre domaines si tu s deja un front.
 const cookieparser = require("cookie-parser"); //cookieparser : Pour les cookies dans les requêtes et les réponses.app.use(cookieparser());//pour les cookies dans les requêtes et les réponses.

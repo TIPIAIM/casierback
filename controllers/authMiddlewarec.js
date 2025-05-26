@@ -37,8 +37,6 @@ const logoutMiddleware = (req, res) => {
   } else {
     console.log("⚠️ Aucune autorisation trouvée pour la déconnexion.");
   }
-
-  res.status(200).json({ message: "Déconnexion réussie" });
 };
 
 module.exports = {

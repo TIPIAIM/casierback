@@ -28,10 +28,12 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   age: { type: Number, required: true },
+  verificationCode: { type: String },
+  isVerified: { type: Boolean, default: false },
 });
 
 // Hachage du mot de passe avant enregistrement
-userSchema.pre("save", async function (next) {
+{/*userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
   try {
@@ -42,11 +44,18 @@ userSchema.pre("save", async function (next) {
   } catch (err) {
     return next(err);
   }
+});*/}
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
 });
-
 // Méthode pour comparer les mots de passe
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
 module.exports = mongoose.model("Userc", userSchema);
+
+
