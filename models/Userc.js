@@ -27,9 +27,11 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  age: { type: Number, required: true },
+ 
   verificationCode: { type: String },
+  verificationCodeExpiresAt: { type: Date }, // ✅ Nouveau champ
   isVerified: { type: Boolean, default: false },
+  role: { type: String, enum: ["admin", "user"], default: "user" } // ✅ Ajout du champ rôle
 });
 
 // Hachage du mot de passe avant enregistrement

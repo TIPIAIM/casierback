@@ -7,6 +7,8 @@
   Il utilise JWT (JSON Web Token) pour gérer l'authentification et bcrypt pour hacher les mots de passe
   */
 }
+
+const Session = require("../models/Session"); // tout en haut
 require("dotenv").config(); // Charger les variables d'environnement
 console.log("Clé secrète chargée :", process.env.JWT_SECRET); // Log pour vérifier la clé secrète
 const bcrypt = require("bcryptjs");
@@ -15,7 +17,6 @@ const jwt = require("jsonwebtoken"); //jsonwebtoken : Pour gérer l'authentifica
 const Userc = require("../models/Userc");
 
 const nodemailer = require("nodemailer");
-
 // Nodemailer configuration (replace with your actual credentials)
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -27,7 +28,7 @@ const transporter = nodemailer.createTransport({
 
 const register = async (req, res) => {
   try {
-    const { name, email, password, age } = req.body;
+    const { name, email, password } = req.body;
 
     const usercExists = await Userc.findOne({ email });
     if (usercExists) {
@@ -39,12 +40,15 @@ const register = async (req, res) => {
       .substring(2, 10)
       .toUpperCase();
 
+      const verificationCodeExpiresAt = new Date(Date.now() + 1 * 60 * 1000); // 15 minutes
+
     const newUser = new Userc({
       name,
       email,
       password, // brut
-      age,
+      
       verificationCode,
+      verificationCodeExpiresAt, // ✅ Stocker l’expiration
     });
 
     await newUser.save();
@@ -81,11 +85,18 @@ const verifyEmail = async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: "Invalid verification code" });
     }
-
+    if (user.verificationCodeExpiresAt < new Date()) {
+      return res.status(400).json({ message: "Code expiré. Veuillez vous réinscrire." });
+    }
     // Update user to set verified to true and remove verification code
     user.isVerified = true;
     user.verificationCode = undefined;
+ 
+
+   
+     user.verificationCodeExpiresAt = undefined;
     await user.save();
+
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
@@ -101,19 +112,8 @@ const verifyEmail = async (req, res) => {
   }
 };
 
-// Connexion
-{
-  /**Taper : JSON (application/json) ;Envoyer une requête de connexion : Méthode : POST
-  {
-  "email": "tonemail@.com",
-  "password": "tonmotdepasse"
-}
-  */
-}
-
 const login = async (req, res) => {
   try {
-    console.log("req.body:", req.body);
     const { email, password } = req.body;
     const userc = await Userc.findOne({ email, isVerified: true });
 
@@ -124,29 +124,55 @@ const login = async (req, res) => {
     }
 
     const isMatch = await userc.comparePassword(password);
-    console.log("Le Password match bien:", isMatch);
-
     if (!isMatch) {
-      return res.status(400).json({
-        message:
-          "Mot de passe incorrect. Veuillez vérifier votre email et réessayer.",
-      });
+      return res.status(400).json({ message: "Mot de passe incorrect" });
     }
 
     const token = jwt.sign(
-      { id: userc._id, email: userc.email },
+      { id: userc._id, email: userc.email, role: userc.role }, // Inclure le rôle dans le token
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
-    console.log("✅ Token JWT généré :", token);
-    res.status(200).json({
+    // Enregistrer la session
+    await Session.create({
+      userId: userc._id,
       token: token,
-      userc: userc,
+      connectedAt: new Date(),
+    });
+
+    // Stocker le token dans un cookie sécurisé
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 60 * 60 * 1000, // 1h
+    });
+    console.log("Cookie défini avec le token:", token);
+
+    // Pas besoin de renvoyer le token dans la réponse
+    res.status(200).json({
+      user: {
+        id: userc._id,
+        name: userc.name,
+        email: userc.email,
+        role: userc.role,
+      },
       message: "Connexion réussie",
+      redirectTo: userc.role === "admin" ? "/adminmere" : "/adminfils",
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+};
+
+// ✅ Étape 3 : Middleware pour sécuriser les routes admin
+const isAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== "admin") {
+    return res
+      .status(403)
+      .json({ message: "Accès refusé : administrateur uniquement." });
+  }
+  next();
 };
 
 // Récupérer tous les utilisateurs
@@ -226,7 +252,6 @@ const loginAfter2FA = async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) {
       return res.status(400).json({ message: "Mot de passe incorrect" });
     }
@@ -235,7 +260,23 @@ const loginAfter2FA = async (req, res) => {
       expiresIn: "1h",
     });
 
-    res.status(200).json({ token: token, message: "Connexion réussie" });
+    // Stocker dans cookie sécurisé
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 60 * 60 * 1000,
+    });
+
+    res.status(200).json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+      message: "Connexion réussie après double authentification",
+    });
+    console.log("Cookie défini avec le token:", token);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -244,6 +285,7 @@ const loginAfter2FA = async (req, res) => {
 module.exports = {
   register,
   login,
+  isAdmin,
   getUsers,
   getUserById,
   updateUser,

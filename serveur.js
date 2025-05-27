@@ -54,7 +54,7 @@ app.use(express.json()); //Pour analyser les objets JSON des requêtes.
 
 //-----------------------------------------
 
-const Basede = require("./Basededon"); //Basede : Pour se connecter à la base de données.
+const Basede = require("./Basededon.js"); //Basede : Pour se connecter à la base de données.
 Basede(); //connexion a la base de donnée
 
 const userRoutes = require("./routes/userRoutes"); //importation du module route utilisateur
@@ -62,12 +62,13 @@ const authRoutes = require("./routes/authRoutes"); //importation du module route
 const demandeRoutes = require("./routes/authdemande");
 const criminalRecord = require("./routes/criminalRecord");
 const emailRoutes = require("./routes/emailRoutes");
+const sessionRoutes = require("./routes/sessionRoutes");
 
 // les routes
 app.use("/api", userRoutes); // Routes d'enregistrement,
 app.use("/api/auth", authRoutes); // Routes d'authentification
 app.use("/api/demande", demandeRoutes); // Routes de demande
-
+app.use("/traficconnexion", sessionRoutes); // Routes de gestion des sessions
 //const path = require("path"); ... après app.use(express.json());
 // Servir les fichiers statiques
 app.use("/uploads", express.static(path.join(__dirname, "uploads"))); //chemin pour les fichiers téléchargés
@@ -82,6 +83,6 @@ app.get("/", (req, res) => {
   //route racine à retirer àpres
   res.send("Bienvenue, votre serveur est deja en cour");
 });
- app.listen(port, () => {
+app.listen(port, () => {
   console.log(` serveur demarré sur http://localhost:${port}`);
 });
