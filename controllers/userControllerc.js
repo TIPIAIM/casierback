@@ -30,43 +30,61 @@ const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    const usercExists = await Userc.findOne({ email });
-    if (usercExists) {
-      return res.status(400).json({ message: "Email déjà utilisé" });
-    }
-
+    // Génération du code et de son expiration (15 minutes)
     const verificationCode = Math.random()
       .toString(36)
       .substring(2, 10)
       .toUpperCase();
+    const verificationCodeExpiresAt = new Date(Date.now() + 1 * 60 * 1000); // 15 * 60 * 1000 = 15 min
 
-      const verificationCodeExpiresAt = new Date(Date.now() + 1 * 60 * 1000); // 15 minutes
+    // Recherche d’un utilisateur existant
+    let user = await Userc.findOne({ email });
 
-    const newUser = new Userc({
-      name,
-      email,
-      password, // brut
-      
-      verificationCode,
-      verificationCodeExpiresAt, // ✅ Stocker l’expiration
-    });
+    if (user) {
+      if (user.isVerified) {
+        // Si déjà vérifié, on refuse l’inscription
+        return res.status(400).json({ message: "Email déjà vérifié" });
+      }
+      // Si code non encore expiré, on demande de vérifier l’email existant
+      if (user.verificationCodeExpiresAt > new Date()) {
+        return res.status(400).json({
+          message:
+            "Un code vous a déjà été envoyé votre boîte mail alors attendez l’expiration avant d'utiliser à nouveau ce mail.",
+        });
+      }
+      // Le code existant a expiré : on met à jour l’utilisateur avec un nouveau code
+      user.name = name;
+      user.password = password; // pensez à mettre en place un hook pre-save pour hasher !
+      user.verificationCode = verificationCode;
+      user.verificationCodeExpiresAt = verificationCodeExpiresAt;
+      await user.save();
+    } else {
+      // Nouvel utilisateur : on crée un nouveau document
+      user = new Userc({
+        name,
+        email,
+        password, // idem hashing en pre-save
+        verificationCode,
+        verificationCodeExpiresAt,
+      });
+      await user.save();
+    }
 
-    await newUser.save();
-
+    // Envoi du mail de vérification
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
       subject: "Code de vérification",
       html: `<p>Voici votre code de vérification : <b>${verificationCode}</b></p>`,
     };
-
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.log(error);
+        console.error(error);
         return res.status(500).json({ message: "Échec de l'envoi du mail" });
       }
       res.status(201).json({
-        message: "Inscription réussie. Vérifiez votre email.",
+        message:
+          "Code de vérification envoyé. Vérifiez votre email. Si vous n’avez rien reçu, recommencez après expiration du précédent code.",
         success: true,
       });
     });
@@ -86,17 +104,16 @@ const verifyEmail = async (req, res) => {
       return res.status(400).json({ message: "Invalid verification code" });
     }
     if (user.verificationCodeExpiresAt < new Date()) {
-      return res.status(400).json({ message: "Code expiré. Veuillez vous réinscrire." });
+      return res
+        .status(400)
+        .json({ message: "Code expiré. Veuillez vous réinscrire." });
     }
     // Update user to set verified to true and remove verification code
     user.isVerified = true;
     user.verificationCode = undefined;
- 
 
-   
-     user.verificationCodeExpiresAt = undefined;
+    user.verificationCodeExpiresAt = undefined;
     await user.save();
-
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",

@@ -1,14 +1,20 @@
+// controllers/sessionController.js
+
 const Session = require("../models/Session");
-const Userc = require("../models/Userc");
 
 exports.getUserSessions = async (req, res) => {
   try {
-    const sessions = await Session.find().populate("userId", "email");
+    // On récupère toutes les sessions et on peuple l'email
+    const sessions = await Session.find()
+      .populate("userId", "email")
+      .exec();
 
-    // Regrouper les sessions par utilisateur avec nombre total de connexions
     const userMap = new Map();
 
     sessions.forEach((session) => {
+      // ← **NE PAS URILISER session.userId._id si userId est null**
+      if (!session.userId) return;
+
       const uid = session.userId._id.toString();
 
       if (!userMap.has(uid)) {
@@ -29,10 +35,13 @@ exports.getUserSessions = async (req, res) => {
       });
     });
 
-    const result = Array.from(userMap.values());
-    res.status(200).json(result);
-  } catch (error) {
-    res.status(500).json({ message: "Erreur lors de la récupération des connexions.", error });
+    return res.status(200).json(Array.from(userMap.values()));
+  } catch (err) {
+    console.error("🛑 getUserSessions error:", err);
+    return res.status(500).json({
+      message: "Erreur lors de la récupération des connexions.",
+      error: err.message,
+    });
   }
 };
 
