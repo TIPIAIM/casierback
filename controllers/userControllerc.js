@@ -35,7 +35,7 @@ const register = async (req, res) => {
       .toString(36)
       .substring(2, 10)
       .toUpperCase();
-    const verificationCodeExpiresAt = new Date(Date.now() + 1 * 60 * 1000); // 15 * 60 * 1000 = 15 min
+    const verificationCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 * 60 * 1000 = 15 min
 
     // Recherche d’un utilisateur existant
     let user = await Userc.findOne({ email });
