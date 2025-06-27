@@ -191,29 +191,33 @@ exports.getId = async (req, res) => {
 exports.updateDemande = async (req, res) => {
   try {
     const { id } = req.params;
-    const { personalInfo, deliveryMethod, status } = req.body;
+    const { personalInfo, deliveryMethod, status, commentaires } = req.body;
 
-    // Vérifier que la demande existe
-    const existingDemande = await demande.findById(id);
-    if (!existingDemande) {
+    const updatedDemande = await demande.findByIdAndUpdate(
+      id,
+      {
+        personalInfo,
+        deliveryMethod,
+        status,
+        commentaires
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!updatedDemande) {
       return res.status(404).json({
         success: false,
         message: "Demande non trouvée",
       });
     }
 
-    // Mettre à jour les champs
-    existingDemande.personalInfo = personalInfo || existingDemande.personalInfo;
-    existingDemande.deliveryMethod = deliveryMethod || existingDemande.deliveryMethod;
-    existingDemande.status = status || existingDemande.status;
-
-    // Sauvegarder les modifications
-    const updatedDemande = await existingDemande.save();
-
     res.status(200).json({
       success: true,
       message: "Demande mise à jour avec succès",
-      data: updatedDemande
+      data: updatedDemande,
     });
   } catch (error) {
     console.error("Erreur lors de la mise à jour:", error);
@@ -224,6 +228,7 @@ exports.updateDemande = async (req, res) => {
     });
   }
 };
+
 // Dans controllers/demandeController.js
 exports.deleteDemande = async (req, res) => {
   try {
