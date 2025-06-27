@@ -1,0 +1,45 @@
+// app.js serveur
+const express = require("express");
+const cors = require("cors");
+const cookieparser = require("cookie-parser");
+require("dotenv").config();
+const path = require("path");
+
+const app = express();
+
+const FRONTENDcasier = process.env.FRONTENDcasier;
+const allowedOrigins = [
+  "http://localhost:5173",
+  FRONTENDcasier,
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
+
+app.use(cookieparser());
+app.use(express.json());
+
+const Basede = require("./Basededon.js");
+Basede();
+
+const userRoutes = require("./routes/userRoutes.js");
+const authRoutes = require("./routes/authRoutes.js");
+const demandeRoutes = require("./routes/authdemande.js");
+const criminalRecord = require("./routes/criminalRecord.js");
+const emailRoutes = require("./routes/emailRoutes.js");
+const sessionRoutes = require("./routes/sessionRoutes.js");
+
+app.use("/api", userRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/demande", demandeRoutes);
+app.use("/traficconnexion", sessionRoutes);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/criminal", criminalRecord);
+app.use("/apii", emailRoutes);
+app.get("/", (req, res) => res.send("Bienvenue, votre serveur est deja en cour"));
+
+module.exports = app;

@@ -5,6 +5,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  premon: {
+    type: String,
+    required: true,
+  },
   email: {
     type: String,
     required: true,
@@ -14,6 +18,7 @@ const userSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  
 });
 
 module.exports = mongoose.model("User", userSchema);

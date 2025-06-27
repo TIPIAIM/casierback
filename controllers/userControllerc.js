@@ -1,13 +1,5 @@
 //userControllerc.js
-
-{
-  /**
- un contrôleur d'authentification pour une application Node.js. Il gère l'inscription,
-   la connexion, la récupération, la mise à jour et la suppression des utilisateurs. 
-  Il utilise JWT (JSON Web Token) pour gérer l'authentification et bcrypt pour hacher les mots de passe
-  */
-}
-
+ 
 const Session = require("../models/Session"); // tout en haut
 require("dotenv").config(); // Charger les variables d'environnement
 console.log("Clé secrète chargée :", process.env.JWT_SECRET); // Log pour vérifier la clé secrète
@@ -15,6 +7,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken"); //jsonwebtoken : Pour gérer l'authentification avec JWT.
 
 const Userc = require("../models/Userc");
+const path = require("path");
 
 const nodemailer = require("nodemailer");
 // Nodemailer configuration (replace with your actual credentials)
@@ -93,6 +86,33 @@ const register = async (req, res) => {
   }
 };
 
+// GET /api/user/me
+const getMe = async (req, res) => {
+  try {
+    const user = await Userc.findById(req.user.id).select("-password -__v");
+    if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+};
+
+// PUT /api/user/me
+const updateMe = async (req, res) => {
+  try {
+    const updateData = { ...req.body };
+    if (req.file) {
+      updateData.photo = `/uploads/profiles/${req.file.filename}`;
+    }
+    const user = await Userc.findByIdAndUpdate(req.user.id, updateData, { new: true, select: "-password -__v" });
+    if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+};
+
+
 const verifyEmail = async (req, res) => {
   try {
     const { verificationCode } = req.body;
@@ -115,9 +135,11 @@ const verifyEmail = async (req, res) => {
     user.verificationCodeExpiresAt = undefined;
     await user.save();
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "5h" }
+    );
 
     res.status(200).json({
       message: "Email verified successfully",
@@ -148,7 +170,7 @@ const login = async (req, res) => {
     const token = jwt.sign(
       { id: userc._id, email: userc.email, role: userc.role }, // Inclure le rôle dans le token
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "5h" }
     );
     // Enregistrer la session
     await Session.create({
@@ -162,7 +184,7 @@ const login = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
-      maxAge: 60 * 60 * 1000, // 1h
+      maxAge: 60 * 60 * 5000, // 5h
     });
     console.log("Cookie défini avec le token:", token);
 
@@ -272,10 +294,11 @@ const loginAfter2FA = async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({ message: "Mot de passe incorrect" });
     }
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "5h" }
+    );
 
     // Stocker dans cookie sécurisé
     res.cookie("token", token, {
@@ -302,6 +325,8 @@ const loginAfter2FA = async (req, res) => {
 module.exports = {
   register,
   login,
+  getMe,
+  updateMe,
   isAdmin,
   getUsers,
   getUserById,

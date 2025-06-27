@@ -1,0 +1,19 @@
+# Ignorer le dossier des dépendances node
+node_modules/
+
+# Ignorer les fichiers de logs
+*.log
+
+# Ignorer les variables d'environnement sensibles
+.env
+
+# Ignorer les fichiers temporaires
+temp/
+tmp/
+
+# Ignorer les dossiers de cache et de debug
+.cache/
+.vscode/
+
+# Fichier système
+.DS_Store

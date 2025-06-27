@@ -1,3 +1,21 @@
+{/*// serveur2.js l'utiliser pour les textes
+const app = require('./app'); // On importe l'app sans la démarrer
+require('dotenv').config();
+
+const port = process.env.PORT || 2025;
+
+console.log("Clé secrète chargée :", process.env.JWT_SECRET);
+
+app.listen(port, () => {
+  console.log(` serveur demarré sur http://localhost:${port}`);
+});
+
+
+*/}
+
+
+
+
 //serveur.js
 
 const express = require("express"); //express : Pour créer des applications Web.

@@ -1,25 +1,5 @@
 // Mise à jour du modèle User
-{
-  /*const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
 
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true }, // Nouveau champ
-  age: { type: Number, required: true },
-});
-// Hachage du mot de passe avant enregistrement
-userSchema.pre("save", async function (next) {
-  //
-  if (!this.isModified("password")) return next();
-  this.password = await bcrypt.hash(this.password, 10);
-  next();
-});
-module.exports = mongoose.model("Userc", userSchema);
-*/
-}
-// Mise à jour du modèle User avec bcryptjs
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs"); // Changé de bcrypt à bcryptjs
 
@@ -27,26 +7,18 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
- 
+  photo: {
+    type: String,
+    default: "", // ou une URL générique/avatar par défaut
+  },
   verificationCode: { type: String },
   verificationCodeExpiresAt: { type: Date }, // ✅ Nouveau champ
   isVerified: { type: Boolean, default: false },
-  role: { type: String, enum: ["admin", "user"], default: "user" } // ✅ Ajout du champ rôle
+  role: { type: String, enum: ["admin", "user"], default: "user" }, // ✅ Ajout du champ rôle
 });
 
 // Hachage du mot de passe avant enregistrement
-{/*userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-
-  try {
-    // Utilisation de bcryptjs au lieu de bcrypt
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (err) {
-    return next(err);
-  }
-});*/}
+ 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(10);
@@ -59,5 +31,3 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 };
 
 module.exports = mongoose.model("Userc", userSchema);
-
-

@@ -41,7 +41,8 @@ router.post("/send-reference-email", async (req, res) => {
     
     <div style="margin: 15px 0; text-align: center;">
       <a href="https://casiergn.vercel.app/voir-mes-demandes?ref=${reference}" 
-         style="background-color: #1A4D2E; color: white; padding: 12px 24px; 
+               
+      style="background-color: #1A4D2E; color: white; padding: 12px 24px; 
                 text-decoration: none; border-radius: 4px; font-weight: bold;
                 display: inline-block;">
         SUIVRE MON DOSSIER

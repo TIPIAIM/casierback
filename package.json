@@ -4,13 +4,14 @@
   "main": "serveur.js",
   "scripts": {
     "start": "node serveur.js",
-    "dev": "nodemon serveur.js"
+    "dev": "nodemon serveur.js",
+    "test": "mocha"
   },
   "keywords": [],
   "author": "alpha ousmane ",
   "license": "ISC",
   "description": "",
- "dependencies": {
+  "dependencies": {
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.3",
     "cookie-parser": "^1.4.7",
@@ -27,6 +28,9 @@
     "nodemailer": "^6.10.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.9"
+    "chai": "^5.2.0",
+    "mocha": "^11.7.0",
+    "nodemon": "^3.1.9",
+    "supertest": "^7.1.1"
   }
 }

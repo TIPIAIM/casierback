@@ -1,11 +1,18 @@
 const mongoose = require("mongoose");
 
 const demandeSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Userc",        // 👈 référence au modèle User
+    required: true      // 👈 important pour la sécurité !
+  },
+
   deliveryMethod: {
     type: String,
     required: true,
     enum: ["court", "mail", "email","postal" ],
   },
+  
   personalInfo: {
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },

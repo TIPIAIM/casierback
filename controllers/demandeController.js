@@ -4,7 +4,7 @@ const path = require("path");
 
 exports.createdemande = async (req, res) => {
   try {
-    //nodem Vérifier que les fichiers ont été uploadés
+    //node  foundDemande  m Vérifier que les fichiers ont été uploadés
     if (!req.files || !req.files.piece1 || !req.files.piece2) {
       return res.status(400).json({
         success: false,
@@ -21,6 +21,7 @@ exports.createdemande = async (req, res) => {
 
     // Créer la nouvelle demande
     const newdemande = new demande({
+      userId: req.user._id, // 👈 Ajoute ceci !
       deliveryMethod,
       personalInfo:
         typeof personalInfo === "string"
@@ -86,7 +87,7 @@ exports.getdemande = async (req, res) => {
       });
     }
 
-    // Construire la réponse avec les URLs des fichiers
+    // Construire foundDemande  la réponse avec les URLs des fichiers
     const responseData = {
       ...foundDemande.toObject(),
       piece1Url: `/uploads/${path.basename(foundDemande.contactInfo.piece1)}`,
@@ -145,8 +146,13 @@ exports.getAll = async (req, res) => {
 exports.getId = async (req, res) => {
   try {
     console.log(`Recherche demande avec ID: ${req.params.id}`);
-    const foundDemande = await demande.findById(req.params.id);
-    
+  //  const foundDemande = await demande.findById(req.params.id);
+  let foundDemande;
+  if (req.user.role === "admin") {
+    foundDemande = await demande.findById(req.params.id); // admin a accès à tout
+  } else {
+    foundDemande = await demande.findOne({ _id: req.params.id, userId: req.user._id });
+  }
     if (!foundDemande) {
       console.log("Demande non trouvée");
       return res.status(404).json({
@@ -258,8 +264,14 @@ exports.deleteDemande = async (req, res) => {
 exports.getByReference = async (req, res) => {
   try {
     console.log(`Recherche demande avec référence: ${req.params.reference}`);
-    const foundDemande = await demande.findOne({ reference: req.params.reference });
-    
+ //   const foundDemande = await demande.findOne({ reference: req.params.reference });
+ let foundDemande;
+ if (req.user.role === "admin") {
+   foundDemande = await demande.findOne({ reference: req.params.reference });
+ } else {
+   foundDemande = await demande.findOne({ reference: req.params.reference, userId: req.user._id });
+ }
+
     if (!foundDemande) {
       console.log("Demande non trouvée");
       return res.status(404).json({
