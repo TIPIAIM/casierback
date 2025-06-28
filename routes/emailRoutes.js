@@ -22,6 +22,9 @@ const transporter = nodemailer.createTransport({
 
 router.post("/send-reference-email", async (req, res) => {
   const { to, reference, clientName, lastName } = req.body;
+//      <a href="https://casiergn.vercel.app/voir-mes-demandes?ref=${reference}" 
+
+//      <span style="word-break: break-all;">https://casiergn.vercel.app/voir-mes-demandes?ref=${reference}</span>
 
   try {
     const mailOptions = {
