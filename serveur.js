@@ -1,21 +1,4 @@
-{/*// serveur2.js l'utiliser pour les textes
-const app = require('./app'); // On importe l'app sans la démarrer
-require('dotenv').config();
-
-const port = process.env.PORT || 2025;
-
-console.log("Clé secrète chargée :", process.env.JWT_SECRET);
-
-app.listen(port, () => {
-  console.log(` serveur demarré sur http://localhost:${port}`);
-});
-
-
-*/}
-
-
-
-
+ 
 //serveur.js
 
 const express = require("express"); //express : Pour créer des applications Web.
@@ -28,14 +11,7 @@ const app = express(); //app : Pour créer une application Express.
 const port = process.env.PORT || 2025; //port : Pour définir le port du serveur.
 (FRONTENDcasier = process.env.FRONTENDcasier), // Pour le développement local
   console.log("Clé secrète chargée :", process.env.JWT_SECRET); // Log pour vérifier la clé secrète noublie ps de verifier s'il est dns env
-
-//-----------------------------------------
-//cookie-parser est un outil simple et efficace pour gérer les cookies dans une application Express. Il facilite la lecture,
-//  la création et la suppression des cookies, tout en offrant des fonctionnalités avancées comme la signature des cookies.
-// Si tu travail avec des cookies dans Node.js, cookie-parser est une bibliothèque incontournable
-//cookieparser : Pour les cookies dans les requêtes et les réponses.app.use(cookieparser());//pour les cookies dans les requêtes et les réponses.
-//-----------------------------------------
-
+ 
 const allowedOrigins = [
   //Pour définir les domaines autorisés.
   // "http://example.com", // Remplacez par vos domaines autorisés
@@ -46,28 +22,16 @@ const allowedOrigins = [
 app.use(
   //Middleware pour autoriser les requêtes entre domaines.
   cors({
-    //cors : Pour autoriser les requêtes entre domaines.
-    // {/*  origin: (origin, callback) => {
-    //origin : Pour définir l'origine de la requête.
-    //     if (!origin || allowedOrigins.includes(origin)) {
-    //Si l'origine est autorisée
-    //    callback(null, true); //Autoriser la requête
-    //   } else {
-    //Sinon
-    //     callback(new Error("Not allowed by CORS")); //Interdire la requête
-    //   }
-    // },*/}
+    
     origin: allowedOrigins,
     credentials: true, // Si vous utilisez des cookies ou des sessions
-    //credentials : Pour autoriser les cookies ou les sessions.
+     //credentials : Pour autoriser les cookies ou les sessions.
     methods: ["GET", "POST", "PUT", "DELETE"], // Méthodes HTTP acceptées
     allowedHeaders: ["Content-Type", "Authorization"], // En-têtes autorisés
   })
 );
 app.use(cookieparser()); //pour les cookies dans les requêtes et les réponses.
-//pour les cookies dans les requêtes et les réponses.
-// Middleware pour gérer les cookies
-// Middleware pour parser le JSON
+ 
 app.use(express.json()); //Pour analyser les objets JSON des requêtes.
 
 //-----------------------------------------
