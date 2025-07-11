@@ -65,6 +65,6 @@ app.get("/", (req, res) => {
   //route racine à retirer àpres
   res.send("Bienvenue, votre serveur est deja en cour");
 });
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
   console.log(` serveur demarré sur http://localhost:${port}`);
 });
