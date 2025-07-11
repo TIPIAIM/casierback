@@ -8,7 +8,7 @@ const cookieparser = require("cookie-parser"); //cookieparser : Pour les cookies
 require("dotenv").config(); // Charger les variables d'environnement
 const path = require("path");
 const app = express(); //app : Pour créer une application Express.
-const port = process.env.PORT || 2025; //port : Pour définir le port du serveur.
+const port = process.env.Port || 2025; //port : Pour définir le port du serveur.
 (FRONTENDcasier = process.env.FRONTENDcasier), // Pour le développement local
   console.log("Clé secrète chargée :", process.env.JWT_SECRET); // Log pour vérifier la clé secrète noublie ps de verifier s'il est dns env
  
